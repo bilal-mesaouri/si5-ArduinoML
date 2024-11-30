@@ -7,7 +7,7 @@ actuator led: 12
 # Declaring states
 on {
     led <= HIGH
-    button is HIGH => off
+    ( button is HIGH AND button is HIGH ) => off 
 }
 
 -> off {
