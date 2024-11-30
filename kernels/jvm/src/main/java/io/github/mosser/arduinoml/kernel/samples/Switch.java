@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class Switch {
 
 	public static void main(String[] args) {
-
+		System.out.println("############## pt");
 		// Declaring elementary bricks
 		Sensor button = new Sensor();
 		button.setName("button");
@@ -42,16 +42,25 @@ public class Switch {
 		off.setActions(Arrays.asList(switchTheLightOff));
 
 		// Creating transitions
-		SignalTransition on2off = new SignalTransition();
+		Transition on2off = new Transition();
 		on2off.setNext(off);
-		on2off.setSensor(button);
-		on2off.setValue(SIGNAL.HIGH);
+		SignalCondition on2offCondition = new SignalCondition();
+		on2offCondition.setSensor(button);
+		on2offCondition.setValue(SIGNAL.HIGH);
+		on2off.setCondition(on2offCondition);
 
-		SignalTransition off2on = new SignalTransition();
+
+		Transition off2on = new Transition();
 		off2on.setNext(on);
-		off2on.setSensor(button);
-		off2on.setValue(SIGNAL.HIGH);
-
+		SignalCondition off2onCondition = new SignalCondition();
+		off2onCondition.setSensor(button);
+		off2onCondition.setValue(SIGNAL.HIGH);
+		SignalCondition off2onCondition2 = new SignalCondition();
+		off2onCondition2.setSensor(button);
+		off2onCondition2.setValue(SIGNAL.HIGH);
+		
+		CompositeCondition compositeCondition = new CompositeCondition(Operator.AND, off2onCondition2, off2onCondition);
+		off2on.setCondition(compositeCondition);
 		// Binding transitions to states
 		on.setTransition(on2off);
 		off.setTransition(off2on);

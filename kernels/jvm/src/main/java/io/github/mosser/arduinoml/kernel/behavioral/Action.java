@@ -5,6 +5,7 @@ import io.github.mosser.arduinoml.kernel.generator.Visitor;
 import io.github.mosser.arduinoml.kernel.structural.Actuator;
 import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
 
+
 public class Action implements Visitable {
 
 	private SIGNAL value;

@@ -99,40 +99,66 @@ public class ToWiring extends Visitor<StringBuffer> {
 
 			if (state.getTransition() != null) {
 				state.getTransition().accept(this);
+				System.out.println("###### transss");
 				w("\t\tbreak;\n");
 			}
 			return;
 		}
 
 	}
-
 	@Override
-	public void visit(SignalTransition transition) {
+	public void visit(TimeCondition condition) {
 		if(context.get("pass") == PASS.ONE) {
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
-			String sensorName = transition.getSensor().getName();
-			w(String.format("\t\t\t%sBounceGuard = millis() - %sLastDebounceTime > debounce;\n",
-					sensorName, sensorName));
-			w(String.format("\t\t\tif( digitalRead(%d) == %s && %sBounceGuard) {\n",
-					transition.getSensor().getPin(), transition.getValue(), sensorName));
-			w(String.format("\t\t\t\t%sLastDebounceTime = millis();\n", sensorName));
-			w("\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
-			w("\t\t\t}\n");
+			int delayInMS = condition.getDelay();
+			w(String.format("\t\t\tdelay(%d);\n", delayInMS));
 			return;
 		}
 	}
 
 	@Override
-	public void visit(TimeTransition transition) {
+	public void visit(SignalCondition condition) {
 		if(context.get("pass") == PASS.ONE) {
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
-			int delayInMS = transition.getDelay();
-			w(String.format("\t\t\tdelay(%d);\n", delayInMS));
-			w("\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
+			System.out.println("####### creating the signal condition");
+
+			String sensorName = condition.getSensor().getName();
+			w(String.format("(digitalRead(%d) == %s && %sBounceGuard)",
+			condition.getSensor().getPin(), condition.getValue(), sensorName));
+			return;
+		}
+	}
+
+
+	@Override
+	public void visit(CompositeCondition compositeCondition) {
+		if(context.get("pass") == PASS.ONE) {
+			return;
+		}
+		if(context.get("pass") == PASS.TWO) {
+				w("(");
+				compositeCondition.getFirstCondition().accept(this);
+				w(compositeCondition.getOperator().toString());
+				compositeCondition.getSecondCondition().accept(this);
+				w(")");
+			return;
+		}
+	}
+
+	@Override
+	public void visit(Transition transition) {
+		if(context.get("pass") == PASS.ONE) {
+			return;
+		}
+		if(context.get("pass") == PASS.TWO) {
+			System.out.println("####### creating the transss");
+			w("\t\t\tif( ");
+			transition.getCondition().accept(this);
+			w("){\n\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
 			w("\t\t\t}\n");
 			return;
 		}
@@ -147,6 +173,18 @@ public class ToWiring extends Visitor<StringBuffer> {
 			w(String.format("\t\t\tdigitalWrite(%d,%s);\n",action.getActuator().getPin(),action.getValue()));
 			return;
 		}
+	}
+
+	@Override
+	public void visit(Condition condition) {
+        if (condition instanceof SignalCondition) {
+            visit((SignalCondition) condition);
+        } else if (condition instanceof CompositeCondition) {
+            visit((CompositeCondition) condition);
+        } else {
+            throw new IllegalArgumentException("Unsupported Condition type: " + condition.getClass());
+        }
+		
 	}
 
 }

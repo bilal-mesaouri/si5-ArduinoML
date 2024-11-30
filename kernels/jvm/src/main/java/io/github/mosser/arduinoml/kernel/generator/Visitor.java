@@ -12,13 +12,15 @@ public abstract class Visitor<T> {
 	public abstract void visit(App app);
 
 	public abstract void visit(State state);
-	public abstract void visit(SignalTransition transition);
-	public abstract void visit(TimeTransition transition);
+	public abstract void visit(SignalCondition condition);
+	public abstract void visit(TimeCondition condition);
+	public abstract void visit(CompositeCondition compositeCondition);
 	public abstract void visit(Action action);
 
 	public abstract void visit(Actuator actuator);
 	public abstract void visit(Sensor sensor);
-
+	public abstract void visit(Transition sensor);
+	public abstract void visit(Condition condition);
 
 	/***********************
 	 ** Helper mechanisms **

@@ -1,11 +1,11 @@
 package io.github.mosser.arduinoml.kernel.behavioral;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.github.mosser.arduinoml.kernel.NamedElement;
 import io.github.mosser.arduinoml.kernel.generator.Visitable;
 import io.github.mosser.arduinoml.kernel.generator.Visitor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class State implements NamedElement, Visitable {
 
