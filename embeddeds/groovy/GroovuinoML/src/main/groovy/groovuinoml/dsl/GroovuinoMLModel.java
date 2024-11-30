@@ -50,20 +50,36 @@ public class GroovuinoMLModel {
 		this.binding.setVariable(name, state);
 	}
 	
-	public void createTransition(State from, State to, Sensor sensor, SIGNAL value) {
-		SignalTransition transition = new SignalTransition();
-		transition.setNext(to);
-		transition.setSensor(sensor);
-		transition.setValue(value);
-		from.setTransition(transition);
+	public void createSignalCondition(Sensor sensor, SIGNAL value) {
+		SignalCondition signalCondition = new SignalCondition();
+		signalCondition.setSensor(sensor);
+		signalCondition.setValue(value);
 	}
+	
+	public void createCompositeCondition(Operator operator, Condition first_condition, Condition second_condition) {
+		CompositeCondition compositeCondition = new CompositeCondition();
+		compositeCondition.setOperator(operator);
+		compositeCondition.setFirstCondition(first_condition);
+		compositeCondition.setSecondCondition(second_condition);
 
-	public void createTransition(State from, State to, int delay) {
-		TimeTransition transition = new TimeTransition();
+	}
+	
+	public void createTransition(State from, State to, Condition condition) {
+		Transition transition = new Transition();
 		transition.setNext(to);
-		transition.setDelay(delay);
+		transition.setCondition(condition);
 		from.setTransition(transition);
 	}
+	
+	
+
+	public void createTimeCondition(State from, State to, int delay) {
+		TimeCondition timeCondition = new TimeCondition();
+		timeCondition.setDelay(delay);
+		
+	}
+	
+	
 	
 	public void setInitialState(State state) {
 		this.initialState = state;

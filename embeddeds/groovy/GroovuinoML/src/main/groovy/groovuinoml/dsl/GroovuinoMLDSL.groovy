@@ -1,4 +1,4 @@
-package main.groovy.groovuinoml.dsl
+package main.groovy.groovuinoml.dsl;
 
 import io.github.mosser.arduinoml.kernel.behavioral.TimeUnit
 import org.codehaus.groovy.control.CompilerConfiguration

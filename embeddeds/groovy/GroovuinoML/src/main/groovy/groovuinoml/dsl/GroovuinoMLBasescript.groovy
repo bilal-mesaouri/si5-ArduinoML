@@ -3,9 +3,13 @@ package main.groovy.groovuinoml.dsl
 import io.github.mosser.arduinoml.kernel.behavioral.TimeUnit
 import io.github.mosser.arduinoml.kernel.behavioral.Action
 import io.github.mosser.arduinoml.kernel.behavioral.State
+import io.github.mosser.arduinoml.kernel.behavioral.Condition
+import io.github.mosser.arduinoml.kernel.behavioral.SignalCondition
+import io.github.mosser.arduinoml.kernel.behavioral.CompositeCondition
 import io.github.mosser.arduinoml.kernel.structural.Actuator
 import io.github.mosser.arduinoml.kernel.structural.Sensor
 import io.github.mosser.arduinoml.kernel.structural.SIGNAL
+import io.github.mosser.arduinoml.kernel.behavioral.Operator
 
 abstract class GroovuinoMLBasescript extends Script {
 //	public static Number getDuration(Number number, TimeUnit unit) throws IOException {
@@ -46,25 +50,73 @@ abstract class GroovuinoMLBasescript extends Script {
 		((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().setInitialState(state instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state) : (State)state)
 	}
 	
-	// from state1 to state2 when sensor becomes signal
+
+	// from state1 to state2 when sensor becomes signal Operator sensor becomes signal
 	def from(state1) {
+		def condition = null
+		CompositeCondition compositeCondition = new CompositeCondition()
+		def sensorHandlerAfterOr
+		State state1Dup = state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1
+
+		def sensorHandlerAfterAnd = {sensor ->
+			[becomes: { signal ->
+				compositeCondition = new CompositeCondition()
+				compositeCondition.setOperator(Operator.AND)
+				SignalCondition signalCondition = new SignalCondition()
+				signalCondition.setSensor(sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor)
+				signalCondition.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+				compositeCondition.setFirstCondition(condition)
+				compositeCondition.setSecondCondition(signalCondition)
+				state1Dup.getTransition().setCondition(compositeCondition)
+				condition = compositeCondition
+				[
+					and: delegate,
+					or: sensorHandlerAfterOr
+					
+				]
+			}]
+		}
+
+		sensorHandlerAfterOr = {sensor ->
+			[becomes: { signal ->
+				compositeCondition = new CompositeCondition()
+				compositeCondition.setOperator(Operator.OR)
+				SignalCondition signalCondition = new SignalCondition()
+				signalCondition.setSensor(sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor)
+				signalCondition.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+				compositeCondition.setFirstCondition(condition)
+				compositeCondition.setSecondCondition(signalCondition)
+				state1Dup.getTransition().setCondition(compositeCondition)
+				condition = compositeCondition
+				[
+					and: sensorHandlerAfterAnd,
+					or: delegate
+					
+				]
+			}]
+		}
+
 		[to: { state2 -> 
-			[when: { sensor ->
-				[becomes: { signal -> 
 					((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
-						state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1, 
+						state1Dup,
 						state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2, 
-						sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor, 
-						signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+						condition)
+			[when: { sensor ->
+				[becomes: { signal ->
+					SignalCondition signalCondition = new SignalCondition()
+					signalCondition.setSensor(sensor instanceof String ? (Sensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (Sensor)sensor)
+					signalCondition.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+					state1Dup.getTransition().setCondition(signalCondition)
+					condition = signalCondition
+					[
+						and: sensorHandlerAfterAnd,
+						or: sensorHandlerAfterOr
+					]
+				}
+				]
 				}]
 			},
-			after: { delay ->
-				((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
-						state1 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state1) : (State)state1,
-						state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2,
-						delay)
-			}]
-		}]
+			]
 	}
 	
 	// export name
