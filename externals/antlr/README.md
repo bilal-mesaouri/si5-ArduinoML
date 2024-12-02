@@ -24,8 +24,6 @@ We consider here that the current directory is the `antlr` directory.
     * `mvn clean package`
   3. Run the compiler using the `exec` plugin:
     * `mvn exec:java -Dexec.args="src/main/resources/red_button.arduinoml"`
-  4. Run the compiler using the `exec` plugin:
-    * `mvn exec:java -Dexec.args="src/main/resources/state_basedalarm.arduinoml"`
     
 ## Code Description
 
