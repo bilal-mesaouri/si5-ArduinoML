@@ -2,18 +2,18 @@ package io.github.mosser.arduinoml.kernel.behavioral;
 
 import io.github.mosser.arduinoml.kernel.generator.Visitor;
 import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
-import io.github.mosser.arduinoml.kernel.structural.Sensor;
+import io.github.mosser.arduinoml.kernel.structural.PinSensor;
 
 public class SignalCondition extends Condition{
 
-    private Sensor sensor;
+    private PinSensor sensor;
     private SIGNAL value;
 
-    public Sensor getSensor() {
+    public PinSensor getSensor() {
         return sensor;
     }
 
-    public void setSensor(Sensor sensor) {
+    public void setSensor(PinSensor sensor) {
         this.sensor = sensor;
     }
 

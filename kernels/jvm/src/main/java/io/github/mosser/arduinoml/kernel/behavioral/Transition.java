@@ -22,8 +22,6 @@ public class Transition implements Visitable {
 	}
 	public void setCondition(Condition condition) {
 		this.condition = condition;
-		System.out.println("Transition condition set");
-		System.out.println(condition == null);
 	}
 	@Override
 	public void accept(Visitor visitor){

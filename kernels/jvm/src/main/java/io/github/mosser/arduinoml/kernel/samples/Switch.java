@@ -11,15 +11,19 @@ import java.util.Arrays;
 public class Switch {
 
 	public static void main(String[] args) {
-		System.out.println("############## pt");
 		// Declaring elementary bricks
-		Sensor button = new Sensor();
+		PinSensor button = new PinSensor();
 		button.setName("button");
 		button.setPin(9);
 
-		Actuator led = new Actuator();
+		PinActuator led = new PinActuator();
 		led.setName("LED");
 		led.setPin(12);
+
+		BusActuator lcd = new BusActuator();
+		lcd.setName("lcd");
+
+		lcd.setAddress(new int[]{2, 3, 4, 5, 6, 7, 8});
 
 		// Declaring states
 		State on = new State();
@@ -34,7 +38,7 @@ public class Switch {
 		switchTheLightOn.setValue(SIGNAL.HIGH);
 
 		Action switchTheLightOff = new Action();
-		switchTheLightOff.setActuator(led);
+		switchTheLightOff.setActuator(lcd);
 		switchTheLightOff.setValue(SIGNAL.LOW);
 
 		// Binding actions to states
@@ -68,7 +72,7 @@ public class Switch {
 		// Building the App
 		App theSwitch = new App();
 		theSwitch.setName("Switch!");
-		theSwitch.setBricks(Arrays.asList(button, led ));
+		theSwitch.setBricks(Arrays.asList(button, led, lcd ));
 		theSwitch.setStates(Arrays.asList(on, off));
 		theSwitch.setInitial(off);
 

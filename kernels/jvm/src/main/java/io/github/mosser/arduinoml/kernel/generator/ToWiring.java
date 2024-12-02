@@ -1,8 +1,17 @@
 package io.github.mosser.arduinoml.kernel.generator;
 
 import io.github.mosser.arduinoml.kernel.App;
-import io.github.mosser.arduinoml.kernel.behavioral.*;
-import io.github.mosser.arduinoml.kernel.structural.*;
+import io.github.mosser.arduinoml.kernel.behavioral.Action;
+import io.github.mosser.arduinoml.kernel.behavioral.CompositeCondition;
+import io.github.mosser.arduinoml.kernel.behavioral.Condition;
+import io.github.mosser.arduinoml.kernel.behavioral.SignalCondition;
+import io.github.mosser.arduinoml.kernel.behavioral.State;
+import io.github.mosser.arduinoml.kernel.behavioral.TimeCondition;
+import io.github.mosser.arduinoml.kernel.behavioral.Transition;
+import io.github.mosser.arduinoml.kernel.structural.Brick;
+import io.github.mosser.arduinoml.kernel.structural.BusActuator;
+import io.github.mosser.arduinoml.kernel.structural.PinActuator;
+import io.github.mosser.arduinoml.kernel.structural.PinSensor;
 
 /**
  * Quick and dirty visitor to support the generation of Wiring code
@@ -61,7 +70,7 @@ public class ToWiring extends Visitor<StringBuffer> {
 	}
 
 	@Override
-	public void visit(Actuator actuator) {
+	public void visit(PinActuator actuator) {
 		if(context.get("pass") == PASS.ONE) {
 			return;
 		}
@@ -70,10 +79,24 @@ public class ToWiring extends Visitor<StringBuffer> {
 			return;
 		}
 	}
+	@Override
+	public void visit(BusActuator actuator) {
+		if (context.get("pass") == PASS.ONE) {
+			w("#include <Wire.h>\n#include <LiquidCrystal.h>\n");
+			w(String.format("LiquidCrystal %s(%s); // %s \n", actuator.getName(), actuator.getAddressString(), actuator.getName()));
+			return;
+		}
+		if (context.get("pass") == PASS.TWO) {
+			w("\t\t\tlcd.begin(16, 2);");
+			w("// Initialize the LCD\n");
+			w(String.format("\t\t\t%s.print(\"Press Button\");\n", actuator.getName()));
+			return;
+		}
+	}
 
 
 	@Override
-	public void visit(Sensor sensor) {
+	public void visit(PinSensor sensor) {
 		if(context.get("pass") == PASS.ONE) {
 			w(String.format("\nboolean %sBounceGuard = false;\n", sensor.getName()));
 			w(String.format("long %sLastDebounceTime = 0;\n", sensor.getName()));
@@ -99,7 +122,6 @@ public class ToWiring extends Visitor<StringBuffer> {
 
 			if (state.getTransition() != null) {
 				state.getTransition().accept(this);
-				System.out.println("###### transss");
 				w("\t\tbreak;\n");
 			}
 			return;
@@ -124,7 +146,6 @@ public class ToWiring extends Visitor<StringBuffer> {
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
-			System.out.println("####### creating the signal condition");
 
 			String sensorName = condition.getSensor().getName();
 			w(String.format("(digitalRead(%d) == %s && %sBounceGuard)",
@@ -155,10 +176,11 @@ public class ToWiring extends Visitor<StringBuffer> {
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
-			System.out.println("####### creating the transss");
+			w("\t\t\tbuttonBounceGuard = millis() - buttonLastDebounceTime > debounce;\n");
 			w("\t\t\tif( ");
 			transition.getCondition().accept(this);
 			w("){\n\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
+			w("\t\t\t\tbuttonLastDebounceTime = millis();\n");
 			w("\t\t\t}\n");
 			return;
 		}
@@ -170,8 +192,18 @@ public class ToWiring extends Visitor<StringBuffer> {
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
-			w(String.format("\t\t\tdigitalWrite(%d,%s);\n",action.getActuator().getPin(),action.getValue()));
-			return;
+			if( action.getActuator() instanceof PinActuator){
+				w(String.format("\t\t\tdigitalWrite(%d,%s);\n",((PinActuator)action.getActuator()).getPin(),action.getValue()));
+				return;
+			}
+			// Handle BusActuator actions (e.g., LCD message)
+			else if (action.getActuator() instanceof BusActuator) {
+				// Generate code to print a message on the LCD
+				BusActuator busActuator = (BusActuator)action.getActuator();
+				w("lcd.setCursor(0, 0);\n");
+				w(String.format("%s.print(\"%s\");\n", busActuator.getName(), busActuator.getMessage()));
+				return;
+			}
 		}
 	}
 
@@ -186,5 +218,7 @@ public class ToWiring extends Visitor<StringBuffer> {
         }
 		
 	}
+
+
 
 }

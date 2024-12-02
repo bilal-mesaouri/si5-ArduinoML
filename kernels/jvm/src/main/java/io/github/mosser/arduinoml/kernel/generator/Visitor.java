@@ -17,8 +17,14 @@ public abstract class Visitor<T> {
 	public abstract void visit(CompositeCondition compositeCondition);
 	public abstract void visit(Action action);
 
-	public abstract void visit(Actuator actuator);
-	public abstract void visit(Sensor sensor);
+	public abstract void visit(PinActuator pinActuator);
+	public abstract void visit(PinSensor pinSensor);
+
+	public abstract void visit(BusActuator busActuator);
+
+
+
+	
 	public abstract void visit(Transition sensor);
 	public abstract void visit(Condition condition);
 

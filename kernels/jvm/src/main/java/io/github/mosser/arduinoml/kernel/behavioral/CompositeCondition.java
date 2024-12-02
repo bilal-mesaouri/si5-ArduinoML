@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.github.mosser.arduinoml.kernel.generator.Visitor;
-import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
-import io.github.mosser.arduinoml.kernel.structural.Sensor;
 
 public class CompositeCondition extends Condition {
     
