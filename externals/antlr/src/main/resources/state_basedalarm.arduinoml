@@ -1,0 +1,16 @@
+application simpleToggle
+
+# Declaring bricks
+sensor button: 9
+actuator led: 12
+
+# Declaring states
+-> off {
+    led <= LOW
+    button is HIGH => on
+}
+
+on {
+    led <= HIGH
+    button is HIGH => off
+}

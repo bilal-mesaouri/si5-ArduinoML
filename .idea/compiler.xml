@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="external-antlr" />
+        <module name="dsl-groovy" />
+        <module name="kernel-jvm" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="external-antlr (1)" target="1.8" />
+      <module name="kernel-jvm (1)" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="GreclipseSettings">
+    <option name="greclipsePath" value="$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-eclipse-batch/3.0.8-01/groovy-eclipse-batch-3.0.8-01.jar" />
+  </component>
+</project>
