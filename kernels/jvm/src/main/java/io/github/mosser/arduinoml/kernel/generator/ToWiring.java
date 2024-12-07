@@ -27,6 +27,8 @@ public class ToWiring extends Visitor<StringBuffer> {
 		w(String.format("// Application name: %s\n", app.getName())+"\n");
 
 		w("long debounce = 200;\n");
+		w("boolean buttonBounceGuard = false;\n");
+		w("long buttonLastDebounceTime = 0;\n");
 		w("\nenum STATE {");
 		String sep ="";
 		for(State state: app.getStates()){
@@ -92,8 +94,6 @@ public class ToWiring extends Visitor<StringBuffer> {
 	@Override
 	public void visit(PinSensor sensor) {
 		if(context.get("pass") == PASS.ONE) {
-			w(String.format("\nboolean %sBounceGuard = false;\n", sensor.getName()));
-			w(String.format("long %sLastDebounceTime = 0;\n", sensor.getName()));
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
@@ -146,7 +146,10 @@ public class ToWiring extends Visitor<StringBuffer> {
 					w("\t\t\t}\n");
 				}
 			}
-
+			// État normal avec une seule transition
+			else if (state.getTransition() != null) {
+				state.getTransition().accept(this);
+			}
 			w("\t\tbreak;\n");
 		}
 	}
@@ -170,7 +173,7 @@ public class ToWiring extends Visitor<StringBuffer> {
 		if(context.get("pass") == PASS.TWO) {
 
 			String sensorName = condition.getSensor().getName();
-			w(String.format("(digitalRead(%d) == %s && %sBounceGuard)",
+			w(String.format("(digitalRead(%d) == %s && buttonBounceGuard)",
 			condition.getSensor().getPin(), condition.getValue(), sensorName));
 			return;
 		}

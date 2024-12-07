@@ -2,12 +2,11 @@
 // Application name: Switch!
 
 long debounce = 200;
+boolean buttonBounceGuard = false;
+long buttonLastDebounceTime = 0;
 
 enum STATE {on, off};
 STATE currentState = off;
-
-boolean buttonBounceGuard = false;
-long buttonLastDebounceTime = 0;
 #include <Wire.h>
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7, 8); // lcd 

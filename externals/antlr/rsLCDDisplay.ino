@@ -3,12 +3,11 @@
 // Application name: redButton
 
 long debounce = 200;
+boolean buttonBounceGuard = false;
+long buttonLastDebounceTime = 0;
 
 enum STATE {on, off};
 STATE currentState = off;
-
-boolean buttonBounceGuard = false;
-long buttonLastDebounceTime = 0;
 #include <Wire.h>
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13, 14); // lcd 
@@ -30,6 +29,7 @@ void loop() {
 			buttonBounceGuard = millis() - buttonLastDebounceTime > debounce;
 			if( (digitalRead(9) == HIGH && buttonBounceGuard)){
 				currentState = off;
+				Serial.println("LED is OFF");
 				buttonLastDebounceTime = millis();
 			}
 		break;
