@@ -53,3 +53,5 @@ First, we obtain a `CharStream` from the file to be used as input by the compile
 
 For the IntelliJ IDE, do not forget to right-click on the `antlr4` directory inside the `target` one (obtained after running the ANTLR tool on the g4 grammar) ans select _"mark directory as generated source root"_. It will allow IntelliJ to deal with the generated source easily.
 
+* to execute a scenario :
+  mvn exec:java -Dexec.args="src/main/resources/SCENARIO_HERE.arduinoml"

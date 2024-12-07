@@ -8,7 +8,7 @@ lcdActuator lcd bus BUS1 message PressAButton
 on {
     led <= HIGH
     lcd <= HELLO
-    ( button is HIGH ) => off 
+    button is HIGH => off 
 }
 
 -> off {

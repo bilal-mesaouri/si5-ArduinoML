@@ -1,29 +1,5 @@
 grammar Arduinoml;
 
-/******************
-** Parser rules **
-******************/
-
-root            :   declaration bricks states EOF;
-
-declaration     :   'application' name=IDENTIFIER;
-
-bricks          :   (sensor|actuator|serial)+;
-   sensor       :   'sensor' location ;
-   actuator     :   'actuator' location ;
-   serial       :   'serial' baudRate=INTEGER;
-   location     :   id=IDENTIFIER ':' port=PORT_NUMBER;
-
-states          :   state+;
-    state       :   initial? name=IDENTIFIER '{'  (action | serialAction)+ transition* '}';
-    action      :   receiver=IDENTIFIER '<=' value=SIGNAL;
-    serialAction :   'serial' '<=' message=STRING;
-    transition  :   serialCondition '=>' next=IDENTIFIER | signalCondition '=>' next=IDENTIFIER;
-    initial     :   '->';
-
-serialCondition :   'serial' '<=' value=STRING;
-signalCondition :   trigger=IDENTIFIER 'is' value=SIGNAL;
-
 /*****************
 ** Lexer rules **
 *****************/
@@ -36,6 +12,35 @@ STRING          :   '"' .*? '"';
 OPERATOR        :   'AND' | 'OR';
 CHARS : [a-zA-Z]+;
 // authorize ' in the name of the key
+
+/******************
+ ** Parser rules **
+ ******************/
+
+root            :   declaration bricks states EOF;  
+
+declaration     :   'application' name=IDENTIFIER;
+
+bricks          :   (pinSensor|actuator|lcdActuator|serial)+;
+    pinSensor   :   'PinSensor'   location ;
+    serial       :   'serial' baudRate=INTEGER;
+    actuator    :   'actuator' location ;
+    location    :   id=IDENTIFIER ':' port=PORT_NUMBER;
+    lcdActuator :   'lcdActuator' id=IDENTIFIER 'bus' bus=('BUS1' | 'BUS2') 'message' message=CHARS;
+    states          :   state+;
+    state       :   initial? name=IDENTIFIER '{'  (action|serialAction)+ (transition+)? '}';
+    action      :   receiver=IDENTIFIER '<=' (value=SIGNAL|message=CHARS);
+    transition  :   cond=condition '=>' next=IDENTIFIER ;
+    initial     :   '->';
+    serialAction :   'serial' '<=' message=STRING;
+
+
+condition  :  signalCondition | '('fisrt_condition=condition operator=OPERATOR second_condition=condition')' |temporalCondition| serialCondition;
+signalCondition   :   trigger=IDENTIFIER 'is' value=SIGNAL;
+temporalCondition :   'after' duration=INTEGER 'ms';
+serialCondition :   'serial' '<=' value=STRING;
+
+
 
 /*************
 ** Helpers **
