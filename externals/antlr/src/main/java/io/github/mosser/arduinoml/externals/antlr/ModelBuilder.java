@@ -65,7 +65,7 @@ public class ModelBuilder extends ArduinomlBaseListener {
     }
 
     @Override
-    public void enterSensor(ArduinomlParser.SensorContext ctx) {
+    public void enterPinSensor(ArduinomlParser.PinSensorContext ctx) {
         PinSensor sensor = new PinSensor();
         sensor.setName(ctx.location().id.getText());
         sensor.setPin(Integer.parseInt(ctx.location().port.getText()));
@@ -78,6 +78,16 @@ public class ModelBuilder extends ArduinomlBaseListener {
         PinActuator actuator = new PinActuator();
         actuator.setName(ctx.location().id.getText());
         actuator.setPin(Integer.parseInt(ctx.location().port.getText()));
+        this.theApp.getBricks().add(actuator);
+        actuators.put(actuator.getName(), actuator);
+    }
+    @Override
+    public void enterLcdActuator(ArduinomlParser.LcdActuatorContext ctx) {
+        BusActuator actuator = new BusActuator();
+        actuator.setName(ctx.id.getText());
+        int[] adress = ctx.bus.getText() == "bus1" ? new int[]{2, 3, 4, 5, 6, 7, 8} : new int[]{8, 9, 10, 11, 12, 13, 14};
+        actuator.setAddress(adress);
+        actuator.setActuatorMessage(ctx.message.getText());;
         this.theApp.getBricks().add(actuator);
         actuators.put(actuator.getName(), actuator);
     }
@@ -120,10 +130,16 @@ public class ModelBuilder extends ArduinomlBaseListener {
             currentState.getActions().add(action);
         } else {
             Action action = new Action();
+            if (actuators.get(ctx.receiver.getText()) instanceof BusActuator) {
+                action.setMessage(ctx.message.getText());
+            }
+            else {
+                action.setValue(SIGNAL.valueOf(ctx.value.getText()));
+            }
             action.setActuator(actuators.get(ctx.receiver.getText()));
-            action.setValue(SIGNAL.valueOf(ctx.value.getText()));
             currentState.getActions().add(action);
         }
+
     }
 
     @Override
@@ -186,6 +202,31 @@ public class ModelBuilder extends ArduinomlBaseListener {
         this.nextStateName = null;
         this.currentCondition.clear();
     }
+
+
+    @Override
+    public void exitCondition(ArduinomlParser.ConditionContext ctx) {
+
+        if (ctx.getParent() instanceof ArduinomlParser.TransitionContext) {
+            if (ctx.operator == null) {
+                this.currentTransition.setCondition(this.currentCondition.get(0));
+            } else {
+                CompositeCondition compositeCondition = new CompositeCondition();
+                compositeCondition.setOperator(Operator.valueOf(ctx.operator.getText()));
+                compositeCondition.setFirstCondition(this.currentCondition.get(0));
+                compositeCondition.setSecondCondition(this.currentCondition.get(1));
+                this.currentTransition.setCondition(compositeCondition);
+            }
+
+            this.currentCondition.clear();
+        }
+
+
+    }
+
+
+
+
     @Override
     public void enterInitial(ArduinomlParser.InitialContext ctx) {
         this.theApp.setInitial(this.currentState);

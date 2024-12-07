@@ -1,16 +1,19 @@
 package main.groovy.groovuinoml.dsl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import groovy.lang.Binding;
+
 import io.github.mosser.arduinoml.kernel.App;
 import io.github.mosser.arduinoml.kernel.behavioral.*;
 import io.github.mosser.arduinoml.kernel.generator.ToWiring;
 import io.github.mosser.arduinoml.kernel.generator.Visitor;
-import io.github.mosser.arduinoml.kernel.structural.Actuator;
 import io.github.mosser.arduinoml.kernel.structural.Brick;
+import io.github.mosser.arduinoml.kernel.structural.PinActuator;
+import io.github.mosser.arduinoml.kernel.structural.BusActuator;
+import io.github.mosser.arduinoml.kernel.structural.PinSensor;
 import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
-import io.github.mosser.arduinoml.kernel.structural.Sensor;
 
 public class GroovuinoMLModel {
 	private List<Brick> bricks;
@@ -25,17 +28,27 @@ public class GroovuinoMLModel {
 		this.binding = binding;
 	}
 	
-	public void createSensor(String name, Integer pinNumber) {
-		Sensor sensor = new Sensor();
+	public void createPinSensor(String name, Integer pinNumber) {
+		PinSensor sensor = new PinSensor();
 		sensor.setName(name);
 		sensor.setPin(pinNumber);
 		this.bricks.add(sensor);
 		this.binding.setVariable(name, sensor);
 //		System.out.println("> sensor " + name + " on pin " + pinNumber);
 	}
+	public void createBusActuator(String name, String bus, String message) {
+		BusActuator busActuator = new BusActuator();
+		busActuator.setName(name);
+		busActuator.setActuatorMessage(message);
+		int[] adresses = bus == "bus1" ? new int[]{2, 3, 4, 5, 6, 7, 8} : new int[]{9, 10, 11, 12, 13, 14, 15};
+		busActuator.setAddress(adresses);
+		this.bricks.add(busActuator);
+		this.binding.setVariable(name, busActuator);
+//		System.out.println("> sensor " + name + " on pin " + pinNumber);
+	}
 	
 	public void createActuator(String name, Integer pinNumber) {
-		Actuator actuator = new Actuator();
+		PinActuator actuator = new PinActuator();
 		actuator.setName(name);
 		actuator.setPin(pinNumber);
 		this.bricks.add(actuator);
@@ -50,7 +63,7 @@ public class GroovuinoMLModel {
 		this.binding.setVariable(name, state);
 	}
 	
-	public void createSignalCondition(Sensor sensor, SIGNAL value) {
+	public void createSignalCondition(PinSensor sensor, SIGNAL value) {
 		SignalCondition signalCondition = new SignalCondition();
 		signalCondition.setSensor(sensor);
 		signalCondition.setValue(value);

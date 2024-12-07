@@ -80,3 +80,6 @@ export "Switch!"
   * Then, to run the Switch example:
     * `java -jar target\dsl-groovy-1.0-jar-with-dependencies.jar scripts\Switch.groovy`
   * ... it is also possible to use the .bat files build.bat and run.bat (Windows)
+
+
+  * to Execute a scenario : java -jar "target/dsl-groovy-1.0-jar-with-dependencies.jar" "scripts/dualCheckAlarm.groovy" > scenario2.ino

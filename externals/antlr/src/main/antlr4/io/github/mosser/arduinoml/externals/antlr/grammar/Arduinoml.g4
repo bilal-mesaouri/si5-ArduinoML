@@ -33,6 +33,9 @@ INTEGER         :   [0-9]+;
 IDENTIFIER      :   LOWERCASE (LOWERCASE|UPPERCASE|DIGITS)*;
 SIGNAL          :   'HIGH' | 'LOW';
 STRING          :   '"' .*? '"';
+OPERATOR        :   'AND' | 'OR';
+CHARS : [a-zA-Z]+;
+// authorize ' in the name of the key
 
 /*************
 ** Helpers **

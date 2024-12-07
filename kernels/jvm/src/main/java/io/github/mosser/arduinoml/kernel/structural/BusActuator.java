@@ -4,14 +4,15 @@ import io.github.mosser.arduinoml.kernel.generator.Visitor;
 
 public class BusActuator extends BusBrick implements Actuator {
 
-    String message = "SET MESSAGE";
+    String actuatorMessage = "SET MESSAGE";
 
-    public String getMessage() {
-        return message;
+
+    public String getActuatorMessage() {
+        return actuatorMessage;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setActuatorMessage(String actuatorMessage) {
+        this.actuatorMessage = actuatorMessage;
     }
     
     @Override

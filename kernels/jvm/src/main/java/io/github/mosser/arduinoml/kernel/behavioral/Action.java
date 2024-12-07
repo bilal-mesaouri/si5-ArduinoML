@@ -10,7 +10,14 @@ public class Action implements Visitable {
 
 	private SIGNAL value;
 	private Actuator actuator;
+	private String  message;
 
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
 
 	public SIGNAL getValue() {
 		return value;

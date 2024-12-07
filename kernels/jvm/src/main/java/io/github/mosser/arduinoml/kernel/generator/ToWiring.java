@@ -80,7 +80,10 @@ public class ToWiring extends Visitor<StringBuffer> {
 		if (context.get("pass") == PASS.TWO) {
 			w("\t\t\tlcd.begin(16, 2);");
 			w("// Initialize the LCD\n");
-			w(String.format("\t\t\t%s.print(\"Press Button\");\n", actuator.getName()));
+			if (actuator.getActuatorMessage().length() > 16) {
+				throw new IllegalArgumentException("LCD message is too long");
+			}
+			w(String.format("\t\t\t%s.print(\"%s\");\n", actuator.getName(),actuator.getActuatorMessage()));
 			return;
 		}
 	}
@@ -221,8 +224,12 @@ public class ToWiring extends Visitor<StringBuffer> {
 			else if (action.getActuator() instanceof BusActuator) {
 				// Generate code to print a message on the LCD
 				BusActuator busActuator = (BusActuator)action.getActuator();
-				w("lcd.setCursor(0, 0);\n");
-				w(String.format("%s.print(\"%s\");\n", busActuator.getName(), busActuator.getMessage()));
+				w(String.format("\t\t\t%s.setCursor(0, 0);\n", busActuator.getName()));
+				if (action.getMessage().length() > 16) {
+					throw new IllegalArgumentException("LCD message is too long");
+				}
+				w(String.format("\t\t\t%s.clear();\n", busActuator.getName()));
+				w(String.format("\t\t\t%s.print(\"%s\");\n", busActuator.getName(), action.getMessage()));
 				return;
 			}
 		}

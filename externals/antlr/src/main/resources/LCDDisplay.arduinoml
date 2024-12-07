@@ -1,0 +1,18 @@
+application redButton
+
+# Declaring bricks
+PinSensor button: 9
+actuator led: 12
+lcdActuator lcd bus BUS1 message PressAButton
+# Declaring statesmessage
+on {
+    led <= HIGH
+    lcd <= HELLO
+    ( button is HIGH ) => off 
+}
+
+-> off {
+    led <= LOW
+    lcd <= GoodBye
+    button is HIGH => on
+}
