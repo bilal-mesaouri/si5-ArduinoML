@@ -22,6 +22,10 @@ public abstract class Visitor<T> {
 
 	public abstract void visit(BusActuator busActuator);
 
+	public abstract void visit(SerialAction action);
+
+	public abstract void visit(SerialBrick serialbrick);
+
 
 
 	
@@ -40,5 +44,6 @@ public abstract class Visitor<T> {
 		return result;
 	}
 
+	public abstract void visit(RemoteCondition condition);
 }
 

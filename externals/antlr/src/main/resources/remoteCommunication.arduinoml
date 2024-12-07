@@ -1,0 +1,23 @@
+application remoteControlApp
+
+serial 9600
+actuator led: 9
+
+-> waitingForInput {
+    led <= LOW
+    serial <= "Press 1 to turn ON, 0 to turn OFF"
+    serial <= "1" => ledOn
+    serial <= "0" => ledOff
+}
+
+ledOn {
+    led <= HIGH
+    serial <= "LED is ON"
+    serial <= "0" => ledOff
+}
+
+ledOff {
+    led <= LOW
+    serial <= "LED is OFF"
+    serial <= "1" => ledOn
+}

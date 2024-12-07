@@ -1,17 +1,8 @@
 package io.github.mosser.arduinoml.kernel.generator;
 
 import io.github.mosser.arduinoml.kernel.App;
-import io.github.mosser.arduinoml.kernel.behavioral.Action;
-import io.github.mosser.arduinoml.kernel.behavioral.CompositeCondition;
-import io.github.mosser.arduinoml.kernel.behavioral.Condition;
-import io.github.mosser.arduinoml.kernel.behavioral.SignalCondition;
-import io.github.mosser.arduinoml.kernel.behavioral.State;
-import io.github.mosser.arduinoml.kernel.behavioral.TimeCondition;
-import io.github.mosser.arduinoml.kernel.behavioral.Transition;
-import io.github.mosser.arduinoml.kernel.structural.Brick;
-import io.github.mosser.arduinoml.kernel.structural.BusActuator;
-import io.github.mosser.arduinoml.kernel.structural.PinActuator;
-import io.github.mosser.arduinoml.kernel.structural.PinSensor;
+import io.github.mosser.arduinoml.kernel.behavioral.*;
+import io.github.mosser.arduinoml.kernel.structural.*;
 
 /**
  * Quick and dirty visitor to support the generation of Wiring code
@@ -110,23 +101,53 @@ public class ToWiring extends Visitor<StringBuffer> {
 
 	@Override
 	public void visit(State state) {
-		if(context.get("pass") == PASS.ONE){
+		if(context.get("pass") == PASS.ONE) {
 			w(state.getName());
 			return;
 		}
 		if(context.get("pass") == PASS.TWO) {
 			w("\t\tcase " + state.getName() + ":\n");
+
+			// Actions normales
 			for (Action action : state.getActions()) {
 				action.accept(this);
 			}
 
-			if (state.getTransition() != null) {
-				state.getTransition().accept(this);
-				w("\t\tbreak;\n");
+			// Si c'est un NormalState, gérer les actions série et transitions multiples
+			if(state instanceof NormalState) {
+				NormalState normalState = (NormalState) state;
+
+				// Actions série
+				for(SerialAction serialAction : normalState.getSerialActions()) {
+					serialAction.accept(this);
+				}
+
+				// Gestion du debounce
+				w("\t\t\tbuttonBounceGuard = millis() - buttonLastDebounceTime > debounce;\n");
+
+				// Transitions multiples
+				boolean isFirst = true;
+				for(Transition transition : normalState.getTransitions()) {
+					if(isFirst) {
+						w("\t\t\tif( ");
+						isFirst = false;
+					} else {
+						w("\t\t\telse if( ");
+					}
+					transition.getCondition().accept(this);
+					w("){\n\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
+					w("\t\t\t\tbuttonLastDebounceTime = millis();\n");
+					w("\t\t\t}\n");
+				}
 			}
+			// État normal avec une seule transition
+			else if (state.getTransition() != null) {
+				state.getTransition().accept(this);
+			}
+
+			w("\t\tbreak;\n");
 			return;
 		}
-
 	}
 	@Override
 	public void visit(TimeCondition condition) {
@@ -218,7 +239,42 @@ public class ToWiring extends Visitor<StringBuffer> {
         }
 		
 	}
+	@Override
+	public void visit(SerialAction action) {
+		if (context.get("pass") == PASS.ONE) {
+			return; // Pas besoin d'ajouter quoi que ce soit lors de la première passe
+		}
+		if (context.get("pass") == PASS.TWO) {
+			w(String.format("  Serial.println(\"%s\");\n", action.getMessage()));
+		}
+	}
 
 
+	@Override
+	public void visit(SerialBrick serial) {
+		if (context.get("pass") == PASS.ONE) {
+			// First pass - declare serial communication
+			w("// Serial communication setup\n");
+			return;
+		}
+		if (context.get("pass") == PASS.TWO) {
+			// Second pass - initialize serial in setup()
+			w(String.format("  Serial.begin(%d);\n", serial.getBaudeRate()));
+			return;
+		}
+	}
+
+	@Override
+	public void visit(RemoteCondition condition) {
+		if (context.get("pass") == PASS.ONE) {
+			return;
+		}
+		if (context.get("pass") == PASS.TWO) {
+			w("(Serial.available() > 0 && Serial.read() == '");
+			w(String.valueOf(condition.getKey()));
+			w("')");
+			return;
+		}
+	}
 
 }

@@ -1,48 +1,47 @@
 grammar Arduinoml;
 
-
 /******************
- ** Parser rules **
- ******************/
+** Parser rules **
+******************/
 
 root            :   declaration bricks states EOF;
 
 declaration     :   'application' name=IDENTIFIER;
 
-bricks          :   (sensor|actuator)+;
-    sensor      :   'sensor'   location ;
-    actuator    :   'actuator' location ;
-    location    :   id=IDENTIFIER ':' port=PORT_NUMBER;
+bricks          :   (sensor|actuator|serial)+;
+   sensor       :   'sensor' location ;
+   actuator     :   'actuator' location ;
+   serial       :   'serial' baudRate=INTEGER;
+   location     :   id=IDENTIFIER ':' port=PORT_NUMBER;
 
 states          :   state+;
-    state       :   initial? name=IDENTIFIER '{'  action+ (transition+)? '}';
+    state       :   initial? name=IDENTIFIER '{'  (action | serialAction)+ transition* '}';
     action      :   receiver=IDENTIFIER '<=' value=SIGNAL;
-    transition  :   cond=condition '=>' next=IDENTIFIER ;
+    serialAction :   'serial' '<=' message=STRING;
+    transition  :   serialCondition '=>' next=IDENTIFIER | signalCondition '=>' next=IDENTIFIER;
     initial     :   '->';
 
-condition  :  signalCondition | '('fisrt_condition=condition operator=OPERATOR second_condition=condition')' |temporalCondition;
-signalCondition   :   trigger=IDENTIFIER 'is' value=SIGNAL;
-temporalCondition :   'after' duration=INTEGER 'ms';
+serialCondition :   'serial' '<=' value=STRING;
+signalCondition :   trigger=IDENTIFIER 'is' value=SIGNAL;
 
 /*****************
- ** Lexer rules **
- *****************/
+** Lexer rules **
+*****************/
 
 PORT_NUMBER     :   [1-9] | '10' | '11' | '12';
 INTEGER         :   [0-9]+;
-IDENTIFIER      :   LOWERCASE (LOWERCASE|UPPERCASE|DIGITS)+;
+IDENTIFIER      :   LOWERCASE (LOWERCASE|UPPERCASE|DIGITS)*;
 SIGNAL          :   'HIGH' | 'LOW';
-OPERATOR        :   'AND' | 'OR';
-// authorize ' in the name of the key
-ALPHANUMERIC    :   [a-zA-Z0-9_']+;
+STRING          :   '"' .*? '"';
 
 /*************
- ** Helpers **
- *************/
+** Helpers **
+*************/
 
-fragment LOWERCASE  : [a-z];                                 // abstract rule, does not really exists
+fragment LOWERCASE  : [a-z];
 fragment UPPERCASE  : [A-Z];
-fragment DIGITS: [0-9];
-NEWLINE             : ('\r'? '\n' | '\r')+      -> skip;
-WS                  : ((' ' | '\t')+)           -> skip;     // who cares about whitespaces?
-COMMENT             : '#' ~( '\r' | '\n' )*     -> skip;     // Single line comments, starting with a #
+fragment DIGITS     : [0-9];
+
+NEWLINE            : ('\r'? '\n' | '\r')+      -> skip;
+WS                 : ((' ' | '\t')+)           -> skip;
+COMMENT            : '#' ~( '\r' | '\n' )*     -> skip;
