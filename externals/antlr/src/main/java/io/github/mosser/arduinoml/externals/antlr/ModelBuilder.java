@@ -116,30 +116,43 @@ public class ModelBuilder extends ArduinomlBaseListener {
         this.theApp.getStates().add(this.currentState);
         this.currentState = null;
     }
-
+    @Override
+    public void enterSerialAction(ArduinomlParser.SerialActionContext ctx) {
+        if (ctx.getParent() instanceof ArduinomlParser.StateContext) {
+            // C'est une action de message
+            SerialAction action = new SerialAction();
+            String message = ctx.message.getText();
+            if (message.startsWith("\"") && message.endsWith("\"")) {
+                message = message.substring(1, message.length() - 1);
+            }
+            action.setMessage(message);
+            if (currentState instanceof NormalState) {
+                ((NormalState)currentState).addSerialAction(action);
+            }
+        }
+    }
     @Override
     public void enterAction(ArduinomlParser.ActionContext ctx) {
         if (ctx.receiver.getText().equals("serial")) {
             SerialAction action = new SerialAction();
             String message = ctx.value.getText();
-            // Remove quotes if present
             if (message.startsWith("\"") && message.endsWith("\"")) {
                 message = message.substring(1, message.length() - 1);
             }
             action.setMessage(message);
-            currentState.getActions().add(action);
+            if (currentState instanceof NormalState) {
+                ((NormalState)currentState).addSerialAction(action);
+            }
         } else {
             Action action = new Action();
             if (actuators.get(ctx.receiver.getText()) instanceof BusActuator) {
                 action.setMessage(ctx.message.getText());
-            }
-            else {
+            } else {
                 action.setValue(SIGNAL.valueOf(ctx.value.getText()));
             }
             action.setActuator(actuators.get(ctx.receiver.getText()));
             currentState.getActions().add(action);
         }
-
     }
 
     @Override
@@ -162,7 +175,6 @@ public class ModelBuilder extends ArduinomlBaseListener {
     public void enterSerialCondition(ArduinomlParser.SerialConditionContext ctx) {
         RemoteCondition condition = new RemoteCondition();
         String value = ctx.value.getText();
-        // Remove quotes if present
         if (value.startsWith("\"") && value.endsWith("\"")) {
             value = value.substring(1, value.length() - 1);
         }

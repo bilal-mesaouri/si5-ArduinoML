@@ -111,24 +111,23 @@ public class ToWiring extends Visitor<StringBuffer> {
 		if(context.get("pass") == PASS.TWO) {
 			w("\t\tcase " + state.getName() + ":\n");
 
-			// Actions normales
+			// Premièrement, les actions normales (LED)
 			for (Action action : state.getActions()) {
 				action.accept(this);
 			}
 
-			// Si c'est un NormalState, gérer les actions série et transitions multiples
 			if(state instanceof NormalState) {
 				NormalState normalState = (NormalState) state;
 
-				// Actions série
+				// Ensuite, les messages série pour l'état actuel
 				for(SerialAction serialAction : normalState.getSerialActions()) {
 					serialAction.accept(this);
 				}
 
-				// Gestion du debounce
+				// Debounce
 				w("\t\t\tbuttonBounceGuard = millis() - buttonLastDebounceTime > debounce;\n");
 
-				// Transitions multiples
+				// Transitions avec messages série après changement d'état
 				boolean isFirst = true;
 				for(Transition transition : normalState.getTransitions()) {
 					if(isFirst) {
@@ -138,18 +137,17 @@ public class ToWiring extends Visitor<StringBuffer> {
 						w("\t\t\telse if( ");
 					}
 					transition.getCondition().accept(this);
-					w("){\n\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
+					w("){\n");
+					w("\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
+					// Ajouter le message série pour le changement d'état
+					w("\t\t\t\tSerial.println(\"LED is " +
+							(transition.getNext().getName().equals("ledOn") ? "ON" : "OFF") + "\");\n");
 					w("\t\t\t\tbuttonLastDebounceTime = millis();\n");
 					w("\t\t\t}\n");
 				}
 			}
-			// État normal avec une seule transition
-			else if (state.getTransition() != null) {
-				state.getTransition().accept(this);
-			}
 
 			w("\t\tbreak;\n");
-			return;
 		}
 	}
 	@Override
@@ -244,7 +242,7 @@ public class ToWiring extends Visitor<StringBuffer> {
         } else {
             throw new IllegalArgumentException("Unsupported Condition type: " + condition.getClass());
         }
-		
+
 	}
 	@Override
 	public void visit(SerialAction action) {

@@ -1,16 +1,17 @@
-application dualCheckAlarmLed
+
+application dualCheckAlarmBuzzer
 
 # Declaring bricks
 PinSensor buttonA: 9
 PinSensor buttonB: 10
-actuator led: 12
+actuator buzzer: 12
 # Declaring statesmessage
 on {
-    led <= HIGH
-    ( buttonA is HIGH AND buttonB is HIGH ) => off 
+    buzzer <= HIGH
+    ( buttonA is HIGH AND buttonB is HIGH ) => off
 }
 
 -> off {
-    led <= LOW
+    buzzer <= LOW
     ( buttonA is LOW OR buttonB is LOW) => on
 }
