@@ -1,7 +1,7 @@
 application simpleAlarm
 
 # Declaring bricks
-sensor button: 9
+PinSensor button: 9
 actuator led: 12
 actuator buzzer: 11
 

@@ -9,19 +9,14 @@ import io.github.mosser.arduinoml.kernel.App;
 import io.github.mosser.arduinoml.kernel.behavioral.*;
 import io.github.mosser.arduinoml.kernel.generator.ToWiring;
 import io.github.mosser.arduinoml.kernel.generator.Visitor;
-import io.github.mosser.arduinoml.kernel.structural.Brick;
-import io.github.mosser.arduinoml.kernel.structural.PinActuator;
-import io.github.mosser.arduinoml.kernel.structural.BusActuator;
-import io.github.mosser.arduinoml.kernel.structural.PinSensor;
-import io.github.mosser.arduinoml.kernel.structural.SIGNAL;
-
+import io.github.mosser.arduinoml.kernel.structural.*;
 public class GroovuinoMLModel {
 	private List<Brick> bricks;
 	private List<State> states;
 	private State initialState;
-	
+	private SerialBrick serialBrick;
 	private Binding binding;
-	
+
 	public GroovuinoMLModel(Binding binding) {
 		this.bricks = new ArrayList<Brick>();
 		this.states = new ArrayList<State>();
@@ -36,6 +31,7 @@ public class GroovuinoMLModel {
 		this.binding.setVariable(name, sensor);
 //		System.out.println("> sensor " + name + " on pin " + pinNumber);
 	}
+
 	public void createBusActuator(String name, String bus, String message) {
 		BusActuator busActuator = new BusActuator();
 		busActuator.setName(name);
@@ -46,7 +42,7 @@ public class GroovuinoMLModel {
 		this.binding.setVariable(name, busActuator);
 //		System.out.println("> sensor " + name + " on pin " + pinNumber);
 	}
-	
+
 	public void createActuator(String name, Integer pinNumber) {
 		PinActuator actuator = new PinActuator();
 		actuator.setName(name);
@@ -56,9 +52,20 @@ public class GroovuinoMLModel {
 	}
 	
 	public void createState(String name, List<Action> actions) {
-		State state = new State();
-		state.setName(name);
-		state.setActions(actions);
+		State state;
+		if (serialBrick != null) {
+			// Si la communication série est activée, utiliser NormalState
+			NormalState normalState = new NormalState();
+			normalState.setName(name);
+			normalState.setActions(actions);
+			state = normalState;
+		} else {
+			// Sinon, utiliser State standard
+			State basicState = new State();
+			basicState.setName(name);
+			basicState.setActions(actions);
+			state = basicState;
+		}
 		this.states.add(state);
 		this.binding.setVariable(name, state);
 	}
@@ -81,23 +88,45 @@ public class GroovuinoMLModel {
 		Transition transition = new Transition();
 		transition.setNext(to);
 		transition.setCondition(condition);
-		from.setTransition(transition);
+
+		if (from instanceof NormalState) {
+			((NormalState) from).addTransition(transition);
+		} else {
+			from.setTransition(transition);
+		}
 	}
-	
-	
 
 	public void createTimeCondition(State from, State to, int delay) {
 		TimeCondition timeCondition = new TimeCondition();
 		timeCondition.setDelay(delay);
 		
+	}	
+
+	public void createSerialCommunication(int baudeRate) {
+		SerialBrick serial = new SerialBrick();
+		serial.setBaudeRate(baudeRate);
+		this.serialBrick = serial;
+		this.bricks.add(serial);
 	}
-	
-	
-	
+
+	public RemoteCondition createRemoteCondition(char key) {
+		RemoteCondition condition = new RemoteCondition();
+		condition.setKey(key);
+		return condition;
+	}
+
+	public void addSerialAction(State state, String message) {
+		if (state instanceof NormalState) {
+			SerialAction action = new SerialAction();
+			action.setMessage(message);
+			((NormalState) state).addSerialAction(action);
+		}
+	}
+
 	public void setInitialState(State state) {
 		this.initialState = state;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	public Object generateCode(String appName) {
 		App app = new App();
@@ -107,7 +136,7 @@ public class GroovuinoMLModel {
 		app.setInitial(this.initialState);
 		Visitor codeGenerator = new ToWiring();
 		app.accept(codeGenerator);
-		
+
 		return codeGenerator.getResult();
 	}
-}
+};

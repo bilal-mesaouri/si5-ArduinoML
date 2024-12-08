@@ -139,9 +139,7 @@ public class ToWiring extends Visitor<StringBuffer> {
 					transition.getCondition().accept(this);
 					w("){\n");
 					w("\t\t\t\tcurrentState = " + transition.getNext().getName() + ";\n");
-					// Ajouter le message série pour le changement d'état
-					w("\t\t\t\tSerial.println(\"LED is " +
-							(transition.getNext().getName().equals("ledOn") ? "ON" : "OFF") + "\");\n");
+					w("\t\t\t\tSerial.println(\"LED is " + (transition.getNext().getName().equals("on") ? "ON" : "OFF") + "\");\n");
 					w("\t\t\t\tbuttonLastDebounceTime = millis();\n");
 					w("\t\t\t}\n");
 				}
@@ -278,9 +276,7 @@ public class ToWiring extends Visitor<StringBuffer> {
 			return;
 		}
 		if (context.get("pass") == PASS.TWO) {
-			w("(Serial.available() > 0 && Serial.read() == '");
-			w(String.valueOf(condition.getKey()));
-			w("')");
+			w("(Serial.available() > 0 && Serial.read() == '" + condition.getKey() + "')");
 			return;
 		}
 	}

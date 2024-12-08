@@ -20,7 +20,7 @@ abstract class GroovuinoMLBasescript extends Script {
 	// pinSensor "name" pin n
 	def pinSensor(String name) {
 		[pin: { n -> ((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createPinSensor(name, n) },
-		onPin: { n -> ((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createPinSensor(name, n)}]
+		 onPin: { n -> ((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createPinSensor(name, n)}]
 	}
 	
 	// actuator "name" pin n
@@ -40,6 +40,10 @@ abstract class GroovuinoMLBasescript extends Script {
 	def busActuator(String name) {
 		[lcd: { n -> ((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createActuator(name, n) }]
 	}
+
+	def serial(Integer baudRate) {
+		((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createSerialCommunication(baudRate)
+	}
 	// state "name" means actuator becomes signal [and actuator becomes signal]*n
 	def state(String name) {
 		List<Action> actions = new ArrayList<Action>()
@@ -48,20 +52,27 @@ abstract class GroovuinoMLBasescript extends Script {
 		def closure
 		closure = { actuator -> 
 			[
-				becomes: { signal ->
-				Action action = new Action()
-				action.setActuator(actuator instanceof String ? (Actuator)((GroovuinoMLBinding)this.getBinding()).getVariable(actuator) : (Actuator)actuator)
-				action.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
-				actions.add(action)
-				[and: closure]
-				},
-				displays: { message -> 
-					Action action = new Action()
-					action.setActuator(actuator instanceof String ? (Actuator)((GroovuinoMLBinding)this.getBinding()).getVariable(actuator) : (Actuator)actuator)
-					action.setMessage(message);
-					actions.add(action)
-					[and: closure]
-				}
+					becomes: { signal ->
+						Action action = new Action()
+						action.setActuator(actuator instanceof String ? (Actuator)((GroovuinoMLBinding)this.getBinding()).getVariable(actuator) : (Actuator)actuator)
+						action.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+						actions.add(action)
+						[and: closure]
+					},
+					displays: { message ->
+						Action action = new Action()
+						action.setActuator(actuator instanceof String ? (Actuator)((GroovuinoMLBinding)this.getBinding()).getVariable(actuator) : (Actuator)actuator)
+						action.setMessage(message)
+						actions.add(action)
+						[and: closure]
+					},
+					prints: { message ->
+						((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().addSerialAction(
+								((GroovuinoMLBinding)this.getBinding()).getVariable(name),
+								message
+						)
+						[and: closure]
+					}
 			]
 		}
 		[means: closure]
@@ -118,27 +129,29 @@ abstract class GroovuinoMLBasescript extends Script {
 			}]
 		}
 
-		[to: { state2 -> 
-					((GroovuinoMLBinding) this.getBinding()).getGroovuinoMLModel().createTransition(
-						state1Dup,
-						state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2, 
-						condition)
+		[to: { state2 ->
+			def targetState = state2 instanceof String ? (State)((GroovuinoMLBinding)this.getBinding()).getVariable(state2) : (State)state2
+
 			[when: { sensor ->
-				[becomes: { signal ->
-					SignalCondition signalCondition = new SignalCondition()
-					signalCondition.setSensor(sensor instanceof String ? (PinSensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (PinSensor)sensor)
-					signalCondition.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
-					state1Dup.getTransition().setCondition(signalCondition)
-					condition = signalCondition
-					[
-						and: sensorHandlerAfterAnd,
-						or: sensorHandlerAfterOr
-					]
+				if (sensor == "remote") {
+					[receives: { key ->
+						condition = ((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createRemoteCondition(key as char)
+						((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createTransition(state1Dup, targetState, condition)
+					}]
+				} else {
+					[becomes: { signal ->
+						SignalCondition signalCondition = new SignalCondition()
+						signalCondition.setSensor(sensor instanceof String ? (PinSensor)((GroovuinoMLBinding)this.getBinding()).getVariable(sensor) : (PinSensor)sensor)
+						signalCondition.setValue(signal instanceof String ? (SIGNAL)((GroovuinoMLBinding)this.getBinding()).getVariable(signal) : (SIGNAL)signal)
+						condition = signalCondition
+
+						def transition = ((GroovuinoMLBinding)this.getBinding()).getGroovuinoMLModel().createTransition(state1Dup, targetState, condition)
+
+						[and: sensorHandlerAfterAnd, or: sensorHandlerAfterOr]
+					}]
 				}
-				]
-				}]
-			},
-			]
+			}]
+		}]
 	}
 	
 	// export name
