@@ -1,0 +1,33 @@
+<root> ::= <declaration> <bricks> <states> EOF
+
+<declaration> ::= "application" <identifier>
+
+<bricks> ::= (<pinSensor> | <actuator> | <lcdActuator> | <serial>)+
+<pinSensor> ::= "PinSensor" <location>
+<serial> ::= "serial" <integer>
+<actuator> ::= "actuator" <location>
+<location> ::= <identifier> ":" <port_number>
+<lcdActuator> ::= "lcdActuator" <identifier> "bus" ("BUS1" | "BUS2") "message" <chars>
+
+<states> ::= <state>+
+<state> ::= <initial>? <identifier> "{" (<action> | <serialAction>)+ <transition>* "}"
+<action> ::= <identifier> "<=" (<signal> | <chars>)
+<transition> ::= <condition> "=>" <identifier>
+<initial> ::= "->"
+<serialAction> ::= "serial" "<=" <string>
+
+<condition> ::= <signalCondition>
+              | "(" <condition> <operator> <condition> ")"
+              | <temporalCondition>
+              | <serialCondition>
+<signalCondition> ::= <identifier> "is" <signal>
+<temporalCondition> ::= "after" <integer> "ms"
+<serialCondition> ::= "serial" "<=" <string>
+
+<port_number> ::= [1-9] | "10" | "11" | "12"
+<integer> ::= [0-9]+
+<identifier> ::= <lowercase> (<lowercase> | <uppercase> | <digits>)*
+<signal> ::= "HIGH" | "LOW"
+<string> ::= '"' <any_char>* '"'
+<operator> ::= "AND" | "OR"
+<chars> ::= [a-zA-Z]+

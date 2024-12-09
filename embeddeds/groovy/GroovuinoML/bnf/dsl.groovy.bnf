@@ -1,0 +1,71 @@
+<script> ::= <statements> "export" <string>
+
+<statements> ::= <statement> | <statement> <statements>
+
+<statement> ::= <serial_config>
+              | <component_declaration>
+              | <state_declaration>
+              | <initial_state>
+              | <transition>
+
+<serial_config> ::= "serial" <integer>
+
+<component_declaration> ::= <sensor_declaration> | <actuator_declaration>
+
+<sensor_declaration> ::= "pinSensor" <string> ("pin" | "onPin") <integer>
+
+<actuator_declaration> ::= <pin_actuator> | <lcd_actuator>
+
+<pin_actuator> ::= "actuator" <string> "pin" <integer>
+
+<lcd_actuator> ::= "lcdActuator" <string> "bus" <bus_id> "message" <string>
+
+<bus_id> ::= "bus1" | "bus2"
+
+<state_declaration> ::= "state" <string> "means" <action_list>
+
+<action_list> ::= <action> | <action> "and" <action_list>
+
+<action> ::= <actuator_ref> <action_type>
+
+<actuator_ref> ::= <string> | <direct_ref>
+
+<direct_ref> ::= <identifier>
+
+<action_type> ::= "becomes" <signal_value>
+                | "displays" <string>
+                | "prints" <string>
+
+<signal_value> ::= <string> | <signal_ref>
+
+<signal_ref> ::= "high" | "low"
+
+<initial_state> ::= "initial" <state_ref>
+
+<state_ref> ::= <string> | <direct_ref>
+
+<transition> ::= "from" <state_ref> "to" <state_ref> "when" <condition>
+
+<condition> ::= <sensor_condition> | <remote_condition>
+
+<sensor_condition> ::= <sensor_ref> "becomes" <signal_value> <composite_condition>?
+
+<composite_condition> ::= <logical_operator> <sensor_condition>
+
+<logical_operator> ::= "and" | "or"
+
+<remote_condition> ::= "remote" "receives" <char>
+
+<sensor_ref> ::= <string> | <direct_ref>
+
+<char> ::= "'a'" | "'z'" | ... /* any character literal */
+
+<string> ::= '"' <characters> '"'
+
+<identifier> ::= [a-zA-Z][a-zA-Z0-9_]*
+
+<integer> ::= [0-9]+
+
+<characters> ::= <character> | <character> <characters>
+
+<character> ::= /* any printable character except " */
